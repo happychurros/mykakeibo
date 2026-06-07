@@ -293,7 +293,7 @@
       // ★ここにGASのデプロイURLを貼り付けてください
       const GAS_URL = "https://script.google.com/macros/s/AKfycbxgYmO1ebCbyJe003X_js-BZM4RoZyvcjOx8tZprAOHqemm3FYCmAEvLIkMK032ntKL/exec"; 
 
-      // 1. 日本時間取得・初期表示の設定（GitHub版にも必要！）
+      // 1. 日本時間取得・初期表示の設定
       function getJstDate() {
           const now = new Date();
           const jstDate = new Date(now.getTime() + (9 * 60 + now.getTimezoneOffset()) * 60000);
@@ -309,7 +309,7 @@
           document.getElementById('month').value = jst.month;
       };
 
-      // 2. 【GAS用から移植】ボタンを選択したときの動き
+      // 2. ボタンを選択したときの動き
       const buttons = document.querySelectorAll('.category-btn');
       const hiddenSelect = document.getElementById('category');
   
@@ -331,6 +331,7 @@
           buttons[0].click();
       }
     
+      // 3. 送信処理
       document.getElementById('kakeiboForm').addEventListener('submit', function(e) {
           e.preventDefault();
           const btn = document.getElementById('submitBtn');
@@ -347,23 +348,28 @@
               method: "POST",
               body: JSON.stringify(data)
           })
-          .then(res => res.json())
-          .then(result => {
+          .then(res => res.text()) // 💡 TEXTとして受け取る
+          .then(text => {
+              const result = JSON.parse(text); // 💡 テキストをJSONオブジェクトに変換
+              
               if(result.status === 'success') {
                   alert('記録しました！');
-                  const savedPayer = localStorage.getItem('lastPayer');
                   this.reset();
-                  // 【GAS用から移植】送信成功後にボタンの選択状態を「食費」に戻す
+                  
+                  // 送信成功後にボタンの選択状態を「食費」に戻す
                   if (buttons.length > 0) buttons[0].click();
+                  
                   const jst = getJstDate();
                   document.getElementById('dateInput').value = jst.full;
                   document.getElementById('month').value = jst.month;
-                  if (savedPayer) document.getElementById('payer').value = savedPayer;
               } else {
                   alert('エラー: ' + result.message);
               }
           })
-          .catch(err => alert('通信エラー'))
+          .catch(err => {
+              console.error(err);
+              alert('通信エラー');
+          })
           .finally(() => {
               btn.value = originalText;
               btn.disabled = false;
