@@ -423,7 +423,9 @@
                     // 届いたデータをカレンダーのマスに流し込む（合計金額を表示）
                     Object.keys(rawDailyData).forEach(function(dateKey) {
                         const targetSpan = document.getElementById("amt-" + dateKey);
-                        if (targetSpan && rawDailyData[dateKey].total !== undefined) {
+                        
+                        // 💡データの塊（Object）の中から、合計金額（.total）だけを狙い撃ちして画面に出します
+                        if (targetSpan && rawDailyData[dateKey] && rawDailyData[dateKey].total !== undefined) {
                             const amount = rawDailyData[dateKey].total;
                             if (amount > 0) {
                                 targetSpan.textContent = "¥" + amount.toLocaleString();
