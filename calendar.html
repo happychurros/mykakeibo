@@ -385,7 +385,8 @@
             // 💡【解決】月を「半角数字の文字列」にしてスプレッドシートの名前と完全に一致させます
             const sheetName = String(monthNum) + "月";
 
-            fetch(`${GAS_URL}?sheet=${encodeURIComponent(sheetName)}`)
+            // 💡【解決】URLの後ろに「&action=getTotals」という合言葉をカチッと合流させます！
+            fetch(`${GAS_URL}?sheet=${encodeURIComponent(sheetName)}&action=getTotals`)
                 .then(res => res.json())
                 .then(dailyTotals => {
                     if (!dailyTotals || dailyTotals.status === 'error') {
