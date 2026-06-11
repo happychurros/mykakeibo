@@ -132,7 +132,7 @@
         /* 項目ボタンのグリッド配置 (4列×3行) */
         .category-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 横に4等分 */
+            grid-template-columns: repeat(3, 1fr); /* 横に3等分 */
             gap: 10px;                             /* ボタン同士の間隔 */
             margin-bottom: 24px;
         }
@@ -188,24 +188,26 @@
             transform: translateY(-3px);
         }
 
-        /* スプレッドシートへのリンク */
-        .sheet-link-container {
-            text-align: center;
+        /* 下部リンクの配置 */
+        .bottom-links-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
             margin-top: 30px;
             padding-bottom: 20px;
         }
 
-        .sheet-link-container a {
+        .bottom-links-container a {
             text-decoration: none;
         }
 
-        .sheet-link-container a .fa-solid {
+        .bottom-links-container a .fa-solid {
             font-size: 38px;
             color: #4db6ac;
             transition: all 0.3s ease;
         }
 
-        .sheet-link-container a:hover .fa-solid {
+        .bottom-links-container a:hover .fa-solid {
             color: var(--primary-hover);
             transform: translateY(-3px);
         }
@@ -282,15 +284,19 @@
         <input type="submit" value="送信" id="submitBtn">
     </form>
 
-    <div class="sheet-link-container">
-        <a href="https://docs.google.com/spreadsheets/d/1DbsbeayrvQyoSal8mABMJMQQamEh9_Hs2tNgziuP9sU/edit" target="_blank">
-            <i class="fa-solid fa-file"></i>
+    <div class="bottom-links-container">
+        <a href="https://docs.google.com/spreadsheets/d/1DbsbeayrvQyoSal8mABMJMQQamEh9_Hs2tNgziuP9sU/edit" target="_blank" title="スプレッドシートを開く">
+            <i class="fa-solid fa-file-excel"></i>
+        </a>
+        <a href="calendar.html" title="カレンダーを見る">
+            <i class="fa-solid fa-calendar-days"></i>
         </a>
     </div>
 
     <script>
-      // (GitHub用 index.html の script部分)
-      // ★ここにGASのデプロイURLを貼り付けてください
+      // =========================================================================
+      // 👇 【重要】ここを、あなたの最新の「GASウェブアプリURL」に書き換えてください！
+      // =========================================================================
       const GAS_URL = "https://script.google.com/macros/s/AKfycbyBqG8l2ImchaZIHWKxcwCumWrWa046h_lf9zWqdZ0oLOFjtqQo96x5fxBEMNS--UZB/exec"; 
 
       // 1. 日本時間取得・初期表示の設定
@@ -315,18 +321,12 @@
   
       buttons.forEach(button => {
           button.addEventListener('click', function() {
-              // すべてのボタンから active クラス（色反転）を消す
               buttons.forEach(btn => btn.classList.remove('active'));
-              
-              // クリックされたボタンに active クラスを枠をつける
               this.classList.add('active');
-              
-              // 隠れているプルダウンの値を、ボタンのデータ値に書き換える
               hiddenSelect.value = this.getAttribute('data-value');
           });
       });
   
-      // 初期状態として、最初のボタン（食費）を選択状態にしておく
       if (buttons.length > 0) {
           buttons[0].click();
       }
@@ -343,20 +343,16 @@
           const data = {};
           formData.forEach((value, key) => { data[key] = value; });
       
-          // fetch APIを使って外部からGASへ送信
           fetch(GAS_URL,  {
               method: "POST",
               body: JSON.stringify(data)
           })
-          .then(res => res.text()) // 💡 TEXTとして受け取る
+          .then(res => res.text())
           .then(text => {
-              const result = JSON.parse(text); // 💡 テキストをJSONオブジェクトに変換
-              
+              const result = JSON.parse(text);
               if(result.status === 'success') {
                   alert('記録しました！');
                   this.reset();
-                  
-                  // 送信成功後にボタンの選択状態を「食費」に戻す
                   if (buttons.length > 0) buttons[0].click();
                   
                   const jst = getJstDate();
