@@ -57,7 +57,7 @@
         /* カレンダーの外枠（カード） */
         .calendar-container {
             background-color: #ffffff;
-            padding: 12px 8px; /* 内側の余白をギューッと狭く */
+            padding: 8px 8px 12px 8px; /* 👈 上の余白を 8px にして、下側を少し広げました */
             border-radius: 20px;
             box-shadow: 0 8px 25px rgba(0, 150, 136, 0.1); 
             width: 100%;
@@ -158,14 +158,14 @@
 
         .day-number {
             font-weight: 700;
-            font-size: 0.6em; /* スマホで見やすいように少し小さく */
+            font-size: 0.5em; /* スマホで見やすいように少し小さく */
             color: var(--text-main);
             line-height: 1;
         }
 
         .day-amount {
             font-weight: 700;
-            font-size: 0.5em; /* 金額がはみ出さないようにキュッと縮小 */
+            font-size: 0.6em; /* 金額がはみ出さないようにキュッと縮小 */
             color: #e67e22;
             text-align: right;
             white-space: nowrap; /* 金額が途中で改行されないように一行に固定 */
@@ -197,6 +197,43 @@
             color: var(--primary-hover);
             transform: translateY(-3px);
         }
+
+        /* 2. 【新機能】画面の下側でスクロールして支出を確認できる詳細エリアの見た目 */
+        .detail-container {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 150, 136, 0.1); 
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            
+            /* 縦に長くなったらこのエリアの中だけでスクロールできるようにする魔法 */
+            max-height: 200px; 
+            overflow-y: auto; 
+        }
+
+        .detail-title {
+            font-size: 0.9em;
+            font-weight: 700;
+            color: var(--text-label);
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 8px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: var(--text-main);
+            padding: 6px 0;
+            border-bottom: 1px dashed #e0f2f1;
+        }
+        .detail-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
@@ -221,6 +258,13 @@
         </div>
     </div>
 
+    </div> <div class="detail-container">
+            <div class="detail-title" id="detailTitle">選択した日の内訳</div>
+            <div id="detailList">
+                <div class="detail-item" style="color: #95a5a6; justify-content: center;">日付をタップするとここに内訳が出ます</div>
+            </div>
+    </div>
+
     <div class="back-link-container">
         <a href="index.html" title="送信フォームに戻る">
             <i class="fa-solid fa-pen-to-square"></i>
@@ -228,24 +272,27 @@
     </div>
 
     <script>
-        // ★送信フォームと同じ最新のGASデプロイURLをここに貼り付けてください
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyBqG8l2ImchaZIHWKxcwCumWrWa046h_lf9zWqdZ0oLOFjtqQo96x5fxBEMNS--UZB/exec"; 
-
         // 1. 初期設定（ページを開いた「今月」からスタートするように自動取得）
         const today = new Date();
         let currentYear = today.getFullYear();
-        let currentMonth = today.getMonth(); // 今の月（自動的に0〜11の数字になります）
+        let currentMonth = today.getMonth(); 
 
+        // 2. 画面のパーツを捕まえる
         const calendarTitle = document.getElementById('calendarTitle');
         const calendarGrid = document.getElementById('calendarGrid');
         const loadingStatus = document.getElementById('loadingStatus');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
+        
+        // 💡【追加】詳細表示用のパーツも捕まえる
+        const detailTitle = document.getElementById('detailTitle');
+        const detailList = document.getElementById('detailList');
 
-        // メイン処理：カレンダーのマス目を1コマずつ組み立てる関数
+        // 💡【追加】スプレッドシートから届いた生データを一時的に保存しておくための保管庫
+        let rawDailyData = {};
+
+        // 3. メイン処理：カレンダーのマス目を組み立てる関数
         function updateCalendar(year, month) {
-            // 年度制限：2026年4月より前、または2027年3月より後ろにはいけないストッパー
-            // （今月が2026年4月なら前月ボタンを無効に、2027年3月なら次月ボタンを無効にします）
             prevBtn.disabled = (year === 2026 && month === 3);
             nextBtn.disabled = (year === 2027 && month === 2);
 
@@ -258,10 +305,12 @@
             const lastDay = new Date(year, month + 1, 0).getDate();
             const prevLastDay = new Date(year, month, 0).getDate();
 
+            // ① 先月の残りで埋める余白マス
             for (let i = firstDayIndex; i > 0; i--) {
                 createDayCell(prevLastDay - i + 1, 'other-month', '');
             }
 
+            // ② 今月の日にちマス
             for (let i = 1; i <= lastDay; i++) {
                 const mStr = String(month + 1).padStart(2, '0');
                 const dStr = String(i).padStart(2, '0');
@@ -269,15 +318,20 @@
                 createDayCell(i, '', dateStr);
             }
 
+            // ③ 来月の頭で埋める余白マス
             const totalCells = firstDayIndex + lastDay;
             const nextMonthDays = 42 - totalCells;
             for (let i = 1; i <= nextMonthDays; i++) {
                 createDayCell(i, 'other-month', '');
             }
 
+            // マス目ができたら、詳細エリアを一度リセットして、データを呼び出す
+            detailTitle.textContent = "選択した日の内訳";
+            detailList.innerHTML = '<div class="detail-item" style="color: #95a5a6; justify-content: center;">日付をタップするとここに内訳が出ます</div>';
             fetchDataFromServer(month + 1);
         }
 
+        // 4. マスを1個ずつ生成して合体するプログラム
         function createDayCell(dayNum, className, dateId) {
             const cell = document.createElement('div');
             cell.className = "day-cell " + className;
@@ -289,33 +343,94 @@
 
             const amountSpan = document.createElement('span');
             amountSpan.className = 'day-amount';
-            if (dateId) amountSpan.id = "amt-" + dateId; 
+            if (dateId) {
+                amountSpan.id = "amt-" + dateId; 
+                
+                // 💡【追加】日付マスがクリックされた時の動きを設定
+                cell.style.cursor = 'pointer';
+                cell.addEventListener('click', function() {
+                    showDayDetails(dateId);
+                });
+            }
             cell.appendChild(amountSpan);
 
             calendarGrid.appendChild(cell);
         }
 
+        // 5. 【新機能】タップされた日付の詳細を下のエリアに書き出す関数
+        function showDayDetails(dateKey) {
+            // タイトルを「〇月〇日の内訳」に変更
+            const [y, m, d] = dateKey.split('-');
+            detailTitle.textContent = `${parseInt(m)}月${parseInt(d)}日の内訳`;
+            detailList.innerHTML = ''; // 一度中身を空っぽにする
+
+            // 保管庫からその日のデータを引っ張ってくる
+            const dayData = rawDailyData[dateKey];
+
+            // もしその日に支出データがなければ「データなし」と表示
+            if (!dayData || !dayData.items || dayData.items.length === 0) {
+                detailList.innerHTML = '<div class="detail-item" style="color: #95a5a6; justify-content: center;">この日の記録はありません</div>';
+                return;
+            }
+
+            // 支出データがあれば、1つずつ行（詳細）を作って追加していく
+            dayData.items.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'detail-item';
+                
+                // 例：左側に「食費 (スーパー)」 、右側に「¥1,280」
+                const detailsStr = item.details ? ` (${item.details})` : '';
+                row.innerHTML = `
+                    <span><strong>${item.category}</strong>${detailsStr}</span>
+                    <span style="color: #e67e22; font-weight: bold;">¥${item.amount.toLocaleString()}</span>
+                `;
+                detailList.appendChild(row);
+            });
+        }
+
+        // 6. GAS側から集計データをもらう通信プログラム（データ形式のズレを修正）
         function fetchDataFromServer(monthNum) {
             loadingStatus.style.visibility = 'visible';
-            const sheetName = monthNum + "月";
-            const requestUrl = GAS_URL + "?action=getTotals&sheet=" + encodeURIComponent(sheetName);
+            
+            const GAS_URL = "https://script.google.com/macros/s/AKfycbyBqG8l2ImchaZIHWKxcwCumWrWa046h_lf9zWqdZ0oLOFjtqQo96x5fxBEMNS--UZB/exec"; 
+            // 💡「全角の月」から「半角の月」に変換してスプレッドシートの名前と完全に一致させます
+            const sheetName = String(monthNum).replace(/[０-９]/g, function(s) {
+                return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+            }) + "月";
 
-            fetch(requestUrl)
+            fetch(`${GAS_URL}?sheet=${encodeURIComponent(sheetName)}`)
                 .then(res => res.json())
                 .then(dailyTotals => {
                     if (!dailyTotals || dailyTotals.status === 'error') {
-                        console.error(dailyTotals ? dailyTotals.message : "データなし");
                         loadingStatus.style.visibility = 'hidden';
                         return;
                     }
 
-                    Object.keys(dailyTotals).forEach(function(dateKey) {
-                        const targetSpan = document.getElementById("amt-" + dateKey);
-                        if (targetSpan) {
-                            const amount = dailyTotals[dateKey];
-                            targetSpan.textContent = "¥" + amount.toLocaleString();
+                    // 💡 届いた生データを、内訳機能が動く形式に自動変換して保管庫に入れる
+                    rawDailyData = {};
+                    Object.keys(dailyTotals).forEach(dateKey => {
+                        // もしGASから「金額の数字だけ」が届いた場合、自動で構造を作ります
+                        if (typeof dailyTotals[dateKey] === 'number') {
+                            rawDailyData[dateKey] = {
+                                total: dailyTotals[dateKey],
+                                items: [{ category: "記録あり", amount: dailyTotals[dateKey], details: "" }]
+                            };
+                        } else {
+                            rawDailyData[dateKey] = dailyTotals[dateKey];
                         }
                     });
+
+                    // 届いたデータをカレンダーのマスに流し込む（合計金額を表示）
+                    Object.keys(rawDailyData).forEach(function(dateKey) {
+                        const targetSpan = document.getElementById("amt-" + dateKey);
+                        if (targetSpan && rawDailyData[dateKey].total !== undefined) {
+                            const amount = rawDailyData[dateKey].total;
+                            if (amount > 0) {
+                                targetSpan.textContent = "¥" + amount.toLocaleString();
+                            }
+                        }
+                    });
+                    
                     loadingStatus.style.visibility = 'hidden';
                 })
                 .catch(err => {
@@ -324,6 +439,7 @@
                 });
         }
 
+        // 7. 前月ボタンのクリック
         prevBtn.addEventListener('click', function() {
             currentMonth--;
             if (currentMonth < 0) {
@@ -333,6 +449,7 @@
             updateCalendar(currentYear, currentMonth);
         });
 
+        // 8. 次月ボタンのクリック
         nextBtn.addEventListener('click', function() {
             currentMonth++;
             if (currentMonth > 11) {
@@ -342,6 +459,7 @@
             updateCalendar(currentYear, currentMonth);
         });
 
+        // 9. ページが開かれた瞬間に最初のカレンダーを自動表示
         updateCalendar(currentYear, currentMonth);
     </script>
 </body>
