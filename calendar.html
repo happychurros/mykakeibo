@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
-
         :root {
             --primary-color: #48c9b0;
             --primary-hover: #34a891;
@@ -33,7 +32,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 10px; /* スマホ用に外側の余白を限界まで削る */
+            padding: 10px;
             box-sizing: border-box;
         }
 
@@ -57,11 +56,11 @@
         /* カレンダーの外枠（カード） */
         .calendar-container {
             background-color: #ffffff;
-            padding: 8px 8px 12px 8px; /* 👈 上の余白を 8px にして、下側を少し広げました */
+            padding: 8px 8px 12px 8px;
             border-radius: 20px;
             box-shadow: 0 8px 25px rgba(0, 150, 136, 0.1); 
             width: 100%;
-            max-width: 500px; /* スマホにちょうどいいサイズに制限 */
+            max-width: 500px;
             box-sizing: border-box;
             margin-bottom: 10px;
         }
@@ -77,7 +76,7 @@
             color: var(--primary-color);
             font-weight: 700;
             margin: 0;
-            font-size: 1.5em; /* 文字を少しだけ小ぶりに */
+            font-size: 1.5em;
             text-shadow: 2px 2px 4px rgba(0, 150, 136, 0.175); 
         }
 
@@ -105,18 +104,18 @@
             cursor: not-allowed;
         }
 
-        /* 🧱 ここがポイント：すき間ゼロのグリッド構造 */
+        /* すき間ゼロのグリッド構造 */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 0px; /* 👈 すき間を完全になくしてピタッと結合！ */
+            gap: 0px;
             border-top: 1px solid var(--border-color);
             border-left: 1px solid var(--border-color);
             border-radius: 4px;
             overflow: hidden;
         }
 
-        /* 曜日ヘッダーの調整 */
+        /* 曜日ヘッダー */
         .weekday {
             text-align: center;
             font-weight: 700;
@@ -130,19 +129,19 @@
         .sun { color: #e74c3c; background-color: #fff5f5; }
         .sat { color: #3498db; background-color: #f0f8ff; }
 
-        /* 📦 ここがポイント：マス目が縦に伸びるのを防ぎ、高さをカット */
+        /* 日付の1マス */
         .day-cell {
             background-color: #ffffff;
             border-right: 1px solid var(--border-color);
             border-bottom: 1px solid var(--border-color);
             aspect-ratio: 1.5 / 1; 
-            padding: 2px; /* 上下の余白をさらに1px削ります */
+            padding: 2px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             min-width: 0;
-            overflow: hidden; /* 👈 文字のせいでマスが縦に広がるのを絶対に許さない設定 */
+            overflow: hidden;
         }
 
         .day-cell:hover {
@@ -158,19 +157,19 @@
 
         .day-number {
             font-weight: 700;
-            font-size: 0.5em; /* スマホで見やすいように少し小さく */
+            font-size: 0.6em;
             color: var(--text-main);
             line-height: 1;
         }
 
         .day-amount {
             font-weight: 700;
-            font-size: 0.6em; /* 金額がはみ出さないようにキュッと縮小 */
+            font-size: 0.55em;
             color: #e67e22;
             text-align: right;
-            white-space: nowrap; /* 金額が途中で改行されないように一行に固定 */
+            white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis; /* もし万が一入り切らない場合は「…」にする安全装置 */
+            text-overflow: ellipsis;
         }
 
         .loading-overlay {
@@ -188,7 +187,7 @@
         }
 
         .back-link-container a .fa-solid {
-            font-size: 32px; /* アイコンも少し小さくして縦幅を節約 */
+            font-size: 32px;
             color: #4db6ac;
             transition: all 0.3s ease;
         }
@@ -198,7 +197,7 @@
             transform: translateY(-3px);
         }
 
-        /* 2. 【新機能】画面の下側でスクロールして支出を確認できる詳細エリアの見た目 */
+        /* 支出詳細エリア */
         .detail-container {
             background-color: #ffffff;
             padding: 15px;
@@ -208,8 +207,6 @@
             max-width: 500px;
             box-sizing: border-box;
             margin-bottom: 15px;
-            
-            /* 縦に長くなったらこのエリアの中だけでスクロールできるようにする魔法 */
             max-height: 200px; 
             overflow-y: auto; 
         }
@@ -258,11 +255,11 @@
         </div>
     </div>
 
-    </div> <div class="detail-container">
-            <div class="detail-title" id="detailTitle">選択した日の内訳</div>
-            <div id="detailList">
-                <div class="detail-item" style="color: #95a5a6; justify-content: center;">日付をタップするとここに内訳が出ます</div>
-            </div>
+    <div class="detail-container">
+        <div class="detail-title" id="detailTitle">選択した日の内訳</div>
+        <div id="detailList">
+            <div class="detail-item" style="color: #95a5a6; justify-content: center;">日付をタップするとここに内訳が出ます</div>
+        </div>
     </div>
 
     <div class="back-link-container">
@@ -283,12 +280,10 @@
         const loadingStatus = document.getElementById('loadingStatus');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
-        
-        // 💡【追加】詳細表示用のパーツも捕まえる
         const detailTitle = document.getElementById('detailTitle');
         const detailList = document.getElementById('detailList');
 
-        // 💡【追加】スプレッドシートから届いた生データを一時的に保存しておくための保管庫
+        // スプレッドシートから届いたデータを一時保存する場所
         let rawDailyData = {};
 
         // 3. メイン処理：カレンダーのマス目を組み立てる関数
@@ -325,13 +320,14 @@
                 createDayCell(i, 'other-month', '');
             }
 
-            // マス目ができたら、詳細エリアを一度リセットして、データを呼び出す
+            // 詳細エリアのリセット
             detailTitle.textContent = "選択した日の内訳";
             detailList.innerHTML = '<div class="detail-item" style="color: #95a5a6; justify-content: center;">日付をタップするとここに内訳が出ます</div>';
+            
             fetchDataFromServer(month + 1);
         }
 
-        // 4. マスを1個ずつ生成して合体するプログラム
+        // 4. マスを1個ずつ生成する関数
         function createDayCell(dayNum, className, dateId) {
             const cell = document.createElement('div');
             cell.className = "day-cell " + className;
@@ -345,8 +341,6 @@
             amountSpan.className = 'day-amount';
             if (dateId) {
                 amountSpan.id = "amt-" + dateId; 
-                
-                // 💡【追加】日付マスがクリックされた時の動きを設定
                 cell.style.cursor = 'pointer';
                 cell.addEventListener('click', function() {
                     showDayDetails(dateId);
@@ -357,28 +351,22 @@
             calendarGrid.appendChild(cell);
         }
 
-        // 5. 【新機能】タップされた日付の詳細を下のエリアに書き出す関数
+        // 5. タップされた日付の詳細を表示する関数
         function showDayDetails(dateKey) {
-            // タイトルを「〇月〇日の内訳」に変更
             const [y, m, d] = dateKey.split('-');
             detailTitle.textContent = `${parseInt(m)}月${parseInt(d)}日の内訳`;
-            detailList.innerHTML = ''; // 一度中身を空っぽにする
+            detailList.innerHTML = '';
 
-            // 保管庫からその日のデータを引っ張ってくる
             const dayData = rawDailyData[dateKey];
 
-            // もしその日に支出データがなければ「データなし」と表示
             if (!dayData || !dayData.items || dayData.items.length === 0) {
                 detailList.innerHTML = '<div class="detail-item" style="color: #95a5a6; justify-content: center;">この日の記録はありません</div>';
                 return;
             }
 
-            // 支出データがあれば、1つずつ行（詳細）を作って追加していく
             dayData.items.forEach(item => {
                 const row = document.createElement('div');
                 row.className = 'detail-item';
-                
-                // 例：左側に「食費 (スーパー)」 、右側に「¥1,280」
                 const detailsStr = item.details ? ` (${item.details})` : '';
                 row.innerHTML = `
                     <span><strong>${item.category}</strong>${detailsStr}</span>
@@ -388,15 +376,14 @@
             });
         }
 
-        // 6. GAS側から集計データをもらう通信プログラム（データ形式のズレを修正）
+        // 6. GASからデータを取得する通信プログラム
         function fetchDataFromServer(monthNum) {
             loadingStatus.style.visibility = 'visible';
             
             const GAS_URL = "https://script.google.com/macros/s/AKfycbyBqG8l2ImchaZIHWKxcwCumWrWa046h_lf9zWqdZ0oLOFjtqQo96x5fxBEMNS--UZB/exec"; 
-            // 💡「全角の月」から「半角の月」に変換してスプレッドシートの名前と完全に一致させます
-            const sheetName = String(monthNum).replace(/[０-９]/g, function(s) {
-                return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
-            }) + "月";
+            
+            // 💡【解決】月を「半角数字の文字列」にしてスプレッドシートの名前と完全に一致させます
+            const sheetName = String(monthNum) + "月";
 
             fetch(`${GAS_URL}?sheet=${encodeURIComponent(sheetName)}`)
                 .then(res => res.json())
@@ -406,25 +393,14 @@
                         return;
                     }
 
-                    // 💡 届いた生データを、内訳機能が動く形式に自動変換して保管庫に入れる
-                    rawDailyData = {};
-                    Object.keys(dailyTotals).forEach(dateKey => {
-                        // もしGASから「金額の数字だけ」が届いた場合、自動で構造を作ります
-                        if (typeof dailyTotals[dateKey] === 'number') {
-                            rawDailyData[dateKey] = {
-                                total: dailyTotals[dateKey],
-                                items: [{ category: "記録あり", amount: dailyTotals[dateKey], details: "" }]
-                            };
-                        } else {
-                            rawDailyData[dateKey] = dailyTotals[dateKey];
-                        }
-                    });
+                    // 💡【解決】届いた生データ（新形式）を保管庫に保存
+                    rawDailyData = dailyTotals;
 
-                    // 届いたデータをカレンダーのマスに流し込む（合計金額を表示）
+                    // カレンダーのマスに合計金額を流し込む
                     Object.keys(rawDailyData).forEach(function(dateKey) {
                         const targetSpan = document.getElementById("amt-" + dateKey);
                         
-                        // 💡データの塊（Object）の中から、合計金額（.total）だけを狙い撃ちして画面に出します
+                        // 💡【解決】データの塊の中から、合計金額（.total）だけを正しく取り出して表示
                         if (targetSpan && rawDailyData[dateKey] && rawDailyData[dateKey].total !== undefined) {
                             const amount = rawDailyData[dateKey].total;
                             if (amount > 0) {
@@ -441,7 +417,7 @@
                 });
         }
 
-        // 7. 前月ボタンのクリック
+        // 7. 前月ボタン
         prevBtn.addEventListener('click', function() {
             currentMonth--;
             if (currentMonth < 0) {
@@ -451,7 +427,7 @@
             updateCalendar(currentYear, currentMonth);
         });
 
-        // 8. 次月ボタンのクリック
+        // 8. 次月ボタン
         nextBtn.addEventListener('click', function() {
             currentMonth++;
             if (currentMonth > 11) {
@@ -461,7 +437,7 @@
             updateCalendar(currentYear, currentMonth);
         });
 
-        // 9. ページが開かれた瞬間に最初のカレンダーを自動表示
+        // 9. 起動時にカレンダーを表示
         updateCalendar(currentYear, currentMonth);
     </script>
 </body>
