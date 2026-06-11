@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月間家計簿カレンダー（2026年度）</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
+
+        :root {
+            --primary-color: #48c9b0;
+            --primary-hover: #34a891;
+            --bg-soft-pink: #e0f7fa;
+            --bg-dot: #a2e2eb;
+            --text-main: #2c3e50;
+            --text-label: #546e7a;
+            --border-color: #b0e0e6;
+        }
+
+        body {
+            position: relative;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: var(--bg-soft-pink);
+            background-image:
+              radial-gradient(var(--bg-dot) 15%, transparent 16%),
+              radial-gradient(var(--bg-dot) 15%, transparent 16%);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, #d1f1ff, #d4f8f0, #e1fffd);
+            background-size: 400% 400%;
+            opacity: 0.6;
+            z-index: -1;
+            animation: gradient-animation 15s ease infinite;
+        }
+
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .calendar-container {
+            background-color: #ffffff;
+            padding: 20px 25px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 150, 136, 0.1); 
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin: 0;
+            font-size: 1.8em;
+            text-shadow: 2px 2px 4px rgba(0, 150, 136, 0.175); 
+        }
+
+        .nav-btn {
+            background-color: var(--bg-soft-pink);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+
+        .weekday {
+            text-align: center;
+            font-weight: 700;
+            color: var(--text-label);
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.9em;
+        }
+        .sun { color: #e74c3c; }
+        .sat { color: #3498db; }
+
+        .day-cell {
+            background-color: #f5ffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-height: 75px;
+            padding: 6px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .day-cell:hover {
+            background-color: #e0f2f1;
+            border-color: var(--primary-color);
+        }
+
+        .other-month {
+            opacity: 0.2;
+            background-color: #fafafa;
+        }
+
+        .day-number {
+            font-weight: 700;
+            font-size: 0.9em;
+            color: var(--text-main);
+        }
+
+        .day-amount {
+            font-weight: 700;
+            font-size: 0.75em;
+            color: #e67e22;
+            text-align: right;
+            word-break: break-all;
+            min-height: 1.2em;
+        }
+
+        .loading-overlay {
+            color: var(--text-label);
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            visibility: hidden;
+        }
+
+        .back-link-container {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .back-link-container a {
+            text-decoration: none;
+        }
+
+        .back-link-container a .fa-solid {
+            font-size: 38px;
+            color: #4db6ac;
+            transition: all 0.3s ease;
+        }
+
+        .back-link-container a:hover .fa-solid {
+            color: var(--primary-hover);
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calendar-container">
+        <div id="loadingStatus" class="loading-overlay"><i class="fa-solid fa-spinner fa-spin"></i> データを読み込み中...</div>
+        
+        <div class="calendar-header">
+            <button class="nav-btn" id="prevBtn"><i class="fa-solid fa-chevron-left"></i> 前月</button>
+            <h1 id="calendarTitle">2026年 4月</h1>
+            <button class="nav-btn" id="nextBtn">次月 <i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid">
+            <div class="weekday sun">日</div>
+            <div class="weekday">月</div>
+            <div class="weekday">火</div>
+            <div class="weekday">水</div>
+            <div class="weekday">木</div>
+            <div class="weekday">金</div>
+            <div class="weekday sat">土</div>
+        </div>
+    </div>
+
+    <div class="back-link-container">
+        <a href="index.html" title="送信フォームに戻る">
+            <i class="fa-solid fa-pen-to-square"></i>
+        </a>
+    </div>
+
+    <script>
+        // ★送信フォームと同じ最新のGASデプロイURLをここに貼り付けてください
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyBqG8l2ImchaZIHWKxcwCumWrWa046h_lf9zWqdZ0oLOFjtqQo96x5fxBEMNS--UZB/exec"; 
+
+        let currentYear = 2026;
+        let currentMonth = 3; // 4月 (JavaScriptの月は0〜11なので、3=4月)
+
+        const calendarTitle = document.getElementById('calendarTitle');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const loadingStatus = document.getElementById('loadingStatus');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        function updateCalendar(year, month) {
+            prevBtn.disabled = (year === 2026 && month === 3);
+            nextBtn.disabled = (year === 2027 && month === 2);
+
+            const cells = calendarGrid.querySelectorAll('.day-cell');
+            cells.forEach(cell => cell.remove());
+
+            calendarTitle.textContent = year + "年 " + (month + 1) + "月";
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            const prevLastDay = new Date(year, month, 0).getDate();
+
+            for (let i = firstDayIndex; i > 0; i--) {
+                createDayCell(prevLastDay - i + 1, 'other-month', '');
+            }
+
+            for (let i = 1; i <= lastDay; i++) {
+                const mStr = String(month + 1).padStart(2, '0');
+                const dStr = String(i).padStart(2, '0');
+                const dateStr = year + "-" + mStr + "-" + dStr;
+                createDayCell(i, '', dateStr);
+            }
+
+            const totalCells = firstDayIndex + lastDay;
+            const nextMonthDays = 42 - totalCells;
+            for (let i = 1; i <= nextMonthDays; i++) {
+                createDayCell(i, 'other-month', '');
+            }
+
+            fetchDataFromServer(month + 1);
+        }
+
+        function createDayCell(dayNum, className, dateId) {
+            const cell = document.createElement('div');
+            cell.className = "day-cell " + className;
+
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'day-number';
+            numberSpan.textContent = dayNum;
+            cell.appendChild(numberSpan);
+
+            const amountSpan = document.createElement('span');
+            amountSpan.className = 'day-amount';
+            if (dateId) amountSpan.id = "amt-" + dateId; 
+            cell.appendChild(amountSpan);
+
+            calendarGrid.appendChild(cell);
+        }
+
+        function fetchDataFromServer(monthNum) {
+            loadingStatus.style.visibility = 'visible';
+            const sheetName = monthNum + "月";
+            const requestUrl = GAS_URL + "?action=getTotals&sheet=" + encodeURIComponent(sheetName);
+
+            fetch(requestUrl)
+                .then(res => res.json())
+                .then(dailyTotals => {
+                    if (!dailyTotals || dailyTotals.status === 'error') {
+                        console.error(dailyTotals ? dailyTotals.message : "データなし");
+                        loadingStatus.style.visibility = 'hidden';
+                        return;
+                    }
+
+                    Object.keys(dailyTotals).forEach(function(dateKey) {
+                        const targetSpan = document.getElementById("amt-" + dateKey);
+                        if (targetSpan) {
+                            const amount = dailyTotals[dateKey];
+                            targetSpan.textContent = "¥" + amount.toLocaleString();
+                        }
+                    });
+                    loadingStatus.style.visibility = 'hidden';
+                })
+                .catch(err => {
+                    console.error("データ取得エラー:", err);
+                    loadingStatus.style.visibility = 'hidden';
+                });
+        }
+
+        prevBtn.addEventListener('click', function() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            updateCalendar(currentYear, currentMonth);
+        });
+
+        nextBtn.addEventListener('click', function() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            updateCalendar(currentYear, currentMonth);
+        });
+
+        updateCalendar(currentYear, currentMonth);
+    </script>
+</body>
+</html>
